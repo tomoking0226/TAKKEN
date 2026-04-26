@@ -1636,6 +1636,23 @@ async function init() {
       }
     }
   }, 30000);
+
+  // === Auto-download on focus / visibility change / periodic ===
+  let _lastAutoDl = 0;
+  const tryAutoDownload = () => {
+    if (!syncConfig.pantryId) return;
+    if (document.hidden) return;
+    const now = Date.now();
+    if (now - _lastAutoDl < 8000) return; // throttle 8s
+    _lastAutoDl = now;
+    cloudDownload(true);
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tryAutoDownload();
+  });
+  window.addEventListener('focus', tryAutoDownload);
+  // Periodic check every 3 minutes when tab is visible
+  setInterval(tryAutoDownload, 180000);
 }
 init();
 </script>
