@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宅建合格ダッシュボード</title>
+<style>
+  :root {
+    --bg-1: #0f0c29;
+    --bg-2: #302b63;
+    --bg-3: #24243e;
+    --card: rgba(255, 255, 255, 0.08);
+    --card-strong: rgba(255, 255, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.18);
+    --text: #f5f7ff;
+    --muted: #b8bdd4;
+    --accent: #ffd166;
+    --accent-2: #ff7e5f;
+    --green: #06d6a0;
+    --blue: #4cc9f0;
+    --pink: #f72585;
+    --purple: #b5179e;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --mat-text: linear-gradient(90deg,#9b5de5,#f15bb5);
+    --mat-oneqa: linear-gradient(90deg,#06d6a0,#4cc9f0);
+    --mat-past: linear-gradient(90deg,#ffd166,#ff7e5f);
+  }
+  [data-theme="light"] {
+    --bg-1: #fef6e4;
+    --bg-2: #fce4ec;
+    --bg-3: #e0f7fa;
+    --card: rgba(255, 255, 255, 0.7);
+    --card-strong: rgba(255, 255, 255, 0.9);
+    --border: rgba(0, 0, 0, 0.12);
+    --text: #1a1d2e;
+    --muted: #5a607a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
+    background-size: 400% 400%;
+    animation: bgShift 20s ease infinite;
+    padding: 24px;
+    line-height: 1.6;
+  }
+  @keyframes bgShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 {
+    font-size: 28px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+  }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    background: var(--card-strong);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.2); box-shadow: var(--shadow); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-2), var(--pink));
+    border: none;
+    color: white;
+    font-weight: 600;
+  }
+  .btn-success { background: linear-gradient(135deg, var(--green), var(--blue)); border: none; color: #042; font-weight: 600; }
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+
+  /* Countdown */
+  .countdown-card {
+    background: linear-gradient(135deg, rgba(255,126,95,0.25), rgba(247,37,133,0.25));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .countdown-card::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,209,102,0.15), transparent 60%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { transform: scale(1.1); } }
+  .countdown-label { font-size: 14px; color: var(--muted); letter-spacing: 2px; }
+  .countdown-days {
+    font-size: 72px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin: 8px 0;
+    position: relative;
+  }
+  .countdown-sub { color: var(--muted); font-size: 14px; position: relative; }
+  .quote {
+    margin-top: 16px;
+    font-style: italic;
+    color: var(--text);
+    opacity: 0.9;
+    position: relative;
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card h2 .icon { font-size: 20px; }
+
+  /* Progress bars */
+  .progress-wrap {
+    background: rgba(0,0,0,0.25);
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  /* Material progress summary */
+  .mat-summary { display: flex; flex-direction: column; gap: 12px; }
+  .mat-row .mat-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .mat-name { font-weight: 600; }
+  .mat-stats { color: var(--muted); font-size: 12px; }
+
+  /* Material tabs */
+  .mat-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .mat-tab {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+  }
+  .mat-tab.active.text { background: var(--mat-text); color: white; border: none; }
+  .mat-tab.active.oneqa { background: var(--mat-oneqa); color: #042; border: none; }
+  .mat-tab.active.past { background: var(--mat-past); color: #422; border: none; }
+  .mat-tab small { font-size: 11px; opacity: 0.8; font-weight: 400; }
+
+  /* Volume / sections */
+  details.volume {
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  details.volume summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  details.volume summary::-webkit-details-marker { display: none; }
+  details.volume summary::after {
+    content: "▶";
+    color: var(--muted);
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+  details.volume[open] summary::after { transform: rotate(90deg); }
+  details.volume summary .vol-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+  details.volume summary .vol-name { font-weight: 700; font-size: 14px; }
+  details.volume summary .vol-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  details.volume summary .vol-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s;
+  }
+  details.volume summary .vol-stats { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .volume-body { padding: 4px 14px 14px; }
+
+  .sec-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 12px;
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
+    flex-wrap: wrap;
+  }
+  .sec-row:last-child { border-bottom: none; }
+  .sec-name { flex: 1; min-width: 110px; font-size: 12px; }
+  .sec-mini-bar { flex: 1; min-width: 80px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; }
+  .sec-mini-fill { height: 100%; transition: width 0.4s; }
+  .sec-input {
+    width: 50px;
+    padding: 3px 5px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    font-size: 11px;
+    font-family: inherit;
+    text-align: center;
+  }
+  .sec-pct { width: 40px; font-size: 11px; color: var(--muted); text-align: right; }
+  .sec-actions { display: flex; gap: 3px; }
+  .sec-btn {
+    padding: 3px 7px;
+    font-size: 11px;
+    background: var(--card-strong);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .sec-btn.plus-correct { background: rgba(6,214,160,0.2); border-color: rgba(6,214,160,0.4); }
+  .sec-btn.plus-wrong { background: rgba(247,37,133,0.2); border-color: rgba(247,37,133,0.4); }
+
+  /* Overall ring */
+  .overall {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 16px;
+  }
+  .ring { position: relative; width: 140px; height: 140px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring-percent { font-size: 32px; font-weight: 800; }
+  .ring-label { font-size: 12px; color: var(--muted); }
+
+  /* Q&A Notes */
+  .search-box {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .search-box:focus { outline: 2px solid var(--accent); }
+  .qa-list { max-height: 480px; overflow-y: auto; }
+  .qa-list::-webkit-scrollbar { width: 8px; }
+  .qa-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .qa-item {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent-2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .qa-meta { display: flex; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 6px; flex-wrap: wrap; }
+  .qa-tag {
+    background: rgba(76,201,240,0.2);
+    border: 1px solid rgba(76,201,240,0.4);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: var(--blue);
+  }
+  .qa-q { font-weight: 600; margin-bottom: 6px; }
+  .qa-a { color: var(--muted); font-size: 13px; padding-left: 10px; border-left: 2px solid var(--green); margin-top: 6px; }
+  .qa-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* Add form */
+  .add-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .add-form textarea, .add-form input, .add-form select {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+  }
+  .add-form textarea { min-height: 60px; }
+  .add-form select option { background: var(--bg-2); color: var(--text); }
+
+  /* AI Launchpad */
+  .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ai-btn {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-strong);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+  }
+  .ai-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .ai-btn-icon { font-size: 22px; }
+  .ai-prompts { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .preset-btn {
+    background: rgba(76,201,240,0.15);
+    border: 1px solid rgba(76,201,240,0.3);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+  }
+  .preset-btn:hover { background: rgba(76,201,240,0.25); }
+
+  /* Stats */
+  .stat-row { display: flex; justify-content: space-around; text-align: center; padding: 8px 0; }
+  .stat-num { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Pomodoro */
+  .timer-display {
+    font-size: 56px;
+    font-weight: 800;
+    text-align: center;
+    margin: 12px 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+  .timer-controls { display: flex; gap: 8px; justify-content: center; }
+  .timer-mode-btns { display: flex; gap: 4px; justify-content: center; margin-bottom: 8px; }
+  .mode-btn { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+  .mode-btn.active { background: var(--accent); color: #000; }
+
+  /* Mock exams */
+  .mock-list { max-height: 200px; overflow-y: auto; }
+  .mock-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    align-items: center;
+  }
+  .mock-score { font-weight: 700; }
+  .mock-pass { color: var(--green); }
+  .mock-fail { color: var(--pink); }
+
+  /* Streak */
+  .streak-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px;
+  }
+  .streak-flame { font-size: 40px; }
+  .streak-num { font-size: 36px; font-weight: 800; color: var(--accent-2); }
+
+  /* Tabs (Q&A filter) */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab {
+    padding: 6px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .tab.active { background: var(--accent); color: #000; font-weight: 600; }
+
+  /* Daily goal */
+  .goal-input { display: flex; gap: 8px; align-items: center; }
+  .goal-input input { flex: 1; }
+
+  /* Sync */
+  .sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--card-strong);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .sync-pill:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .sync-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #888; }
+  .sync-pill.ok .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .sync-pill.syncing .dot { background: var(--blue); animation: pulse-dot 1s infinite; }
+  .sync-pill.err .dot { background: var(--pink); }
+  @keyframes pulse-dot { 50% { opacity: 0.3; } }
+
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-bg.active { display: flex; }
+  .modal {
+    background: linear-gradient(135deg, var(--bg-2), var(--bg-3));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 540px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+  }
+  .modal h3 { margin-bottom: 16px; font-size: 18px; }
+  .modal label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 4px; }
+  .modal input { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; }
+  .modal .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .step-box { background: rgba(76,201,240,0.1); border: 1px solid rgba(76,201,240,0.3); border-radius: 10px; padding: 12px; margin: 12px 0; font-size: 13px; }
+  .step-box ol { margin: 0; padding-left: 20px; }
+  .step-box li { margin: 4px 0; }
+  .step-box a { color: var(--blue); }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    background: rgba(255,209,102,0.2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    margin-left: 4px;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .countdown-days { font-size: 56px; }
+    h1 { font-size: 22px; }
+    .ai-grid { grid-template-columns: 1fr; }
+    .sec-row { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🎓 宅建合格ダッシュボード</h1>
+    <div class="header-actions">
+      <div class="sync-pill" id="syncPill" onclick="openSyncModal()" title="クラウド同期">
+        <span class="dot"></span>
+        <span id="syncLabel">☁ 同期未設定</span>
+      </div>
+      <button class="btn btn-small" onclick="toggleTheme()">🌓 テーマ</button>
+      <button class="btn btn-small" onclick="exportData()">⬇ エクスポート</button>
+      <button class="btn btn-small" onclick="document.getElementById('importFile').click()">⬆ インポート</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-small" onclick="if(confirm('全データを削除しますか？')){localStorage.clear();location.reload();}">🗑 リセット</button>
+    </div>
+  </header>
+
+  <!-- Countdown -->
+  <div class="countdown-card">
+    <div class="countdown-label">試験日まであと</div>
+    <div class="countdown-days" id="countdown">--</div>
+    <div class="countdown-sub" id="examDate">2026年10月18日（日）</div>
+    <div class="quote" id="quote">"千里の道も一歩から"</div>
+  </div>
+
+  <!-- Top Row -->
+  <div class="grid">
+    <!-- Overall Progress -->
+    <div class="card">
+      <h2><span class="icon">🎯</span>全体進捗</h2>
+      <div class="overall">
+        <div class="ring">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.1)" stroke-width="12" fill="none"/>
+            <circle id="ringProgress" cx="70" cy="70" r="60" stroke="url(#gradRing)" stroke-width="12" fill="none"
+              stroke-dasharray="377" stroke-dashoffset="377" stroke-linecap="round" style="transition: stroke-dashoffset 0.8s;"/>
+            <defs>
+              <linearGradient id="gradRing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffd166"/>
+                <stop offset="100%" stop-color="#f72585"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-percent" id="overallPercent">0%</div>
+            <div class="ring-label">全教材平均</div>
+          </div>
+        </div>
+        <div class="mat-summary" style="width:100%" id="matSummary"></div>
+        <div class="stat-row" style="width:100%">
+          <div><div class="stat-num" id="totalSolved">0</div><div class="stat-label">完了総数</div></div>
+          <div><div class="stat-num" id="totalCorrect">0</div><div class="stat-label">正解数</div></div>
+          <div><div class="stat-num" id="accuracy">0%</div><div class="stat-label">正答率</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streak / Daily Goal -->
+    <div class="card">
+      <h2><span class="icon">🔥</span>連続学習日数</h2>
+      <div class="streak-display">
+        <span class="streak-flame">🔥</span>
+        <div>
+          <div class="streak-num" id="streakNum">0</div>
+          <div style="font-size:12px;color:var(--muted)">日連続</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:13px;margin-bottom:6px;">今日の目標問題数</div>
+        <div class="goal-input">
+          <input type="number" id="dailyGoalInput" placeholder="目標問題数" min="0">
+          <button class="btn btn-small btn-primary" onclick="setDailyGoal()">設定</button>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);" id="goalProgress">未設定</div>
+        <div class="progress-wrap" style="margin-top:6px;">
+          <div class="progress-bar" id="goalBar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--blue));"></div>
+        </div>
+        <button class="btn btn-small btn-success" style="width:100%;margin-top:8px;" onclick="logTodayStudy()">📝 今日の学習を記録</button>
+      </div>
+    </div>
+
+    <!-- Pomodoro -->
+    <div class="card">
+      <h2><span class="icon">⏱</span>集中タイマー</h2>
+      <div class="timer-mode-btns">
+        <button class="btn mode-btn active" onclick="setTimerMode(25,'focus',this)">集中 25分</button>
+        <button class="btn mode-btn" onclick="setTimerMode(5,'break',this)">休憩 5分</button>
+        <button class="btn mode-btn" onclick="setTimerMode(50,'focus',this)">集中 50分</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-controls">
+        <button class="btn btn-primary" onclick="startTimer()">▶ 開始</button>
+        <button class="btn" onclick="pauseTimer()">⏸ 停止</button>
+        <button class="btn" onclick="resetTimer()">↺ リセット</button>
+      </div>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted);">
+        本日の集中時間: <span id="todayFocus">0</span>分 / 累計: <span id="totalFocus">0</span>分
+      </div>
+    </div>
+  </div>
+
+  <!-- Material Section Progress (full width) -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2><span class="icon">📊</span>教材別 セクション進捗</h2>
+    <div class="mat-tabs">
+      <div class="mat-tab text active" id="tab-text" onclick="switchMaterial('text')">
+        📘 テキスト<small id="lbl-text">0/0</small>
+      </div>
+      <div class="mat-tab oneqa" id="tab-oneqa" onclick="switchMaterial('oneqa')">
+        ✏️ 一問一答<small id="lbl-oneqa">0/0</small>
+      </div>
+      <div class="mat-tab past" id="tab-past" onclick="switchMaterial('past')">
+        📜 過去問題集<small id="lbl-past">0/0</small>
+      </div>
+    </div>
+    <div id="materialContent"></div>
+  </div>
+
+  <!-- Middle Row -->
+  <div class="grid">
+    <!-- AI Launchpad -->
+    <div class="card">
+      <h2><span class="icon">🤖</span>AI即呼び出し</h2>
+      <textarea id="aiQuestion" placeholder="わからない問題をここに貼り付け…" style="width:100%;min-height:100px;padding:10px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical;margin-bottom:8px;"></textarea>
+      <div class="ai-grid">
+        <button class="ai-btn" onclick="askAI('claude')"><span class="ai-btn-icon">🟣</span><span>Claude で解説</span></button>
+        <button class="ai-btn" onclick="askAI('chatgpt')"><span class="ai-btn-icon">🟢</span><span>ChatGPT で解説</span></button>
+        <button class="ai-btn" onclick="askAI('gemini')"><span class="ai-btn-icon">🔵</span><span>Gemini で解説</span></button>
+        <button class="ai-btn" onclick="askAI('perplexity')"><span class="ai-btn-icon">🟠</span><span>Perplexity で解説</span></button>
+      </div>
+      <div class="ai-prompts">
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">プロンプトテンプレ（クリックで適用）：</div>
+        <button class="preset-btn" onclick="setPreset('explain')">📘 宅建初学者向けにやさしく解説して</button>
+        <button class="preset-btn" onclick="setPreset('compare')">🔍 似た条文・引っかけポイントと比較</button>
+        <button class="preset-btn" onclick="setPreset('mnemonic')">🧠 覚え方（ゴロ合わせ）を作って</button>
+        <button class="preset-btn" onclick="setPreset('quiz')">✏️ 類題を3問出題して</button>
+      </div>
+    </div>
+
+    <!-- Mock Exam -->
+    <div class="card">
+      <h2><span class="icon">📝</span>模試スコア記録</h2>
+      <div class="add-form">
+        <input type="text" id="mockName" placeholder="模試名（例：LEC第1回）">
+        <div style="display:flex;gap:6px;">
+          <input type="number" id="mockScore" placeholder="得点" min="0" max="50">
+          <input type="date" id="mockDate">
+        </div>
+        <button class="btn btn-success" onclick="addMockScore()">追加</button>
+      </div>
+      <div class="mock-list" id="mockList"></div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;">
+        合格ライン目安：35〜38点 / 50点
+      </div>
+    </div>
+  </div>
+
+  <!-- Q&A Notes (full width) -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2><span class="icon">📚</span>苦手問題ノート（自分の解説対応）</h2>
+    <div class="tabs">
+      <div class="tab active" onclick="filterQA('all', this)">すべて</div>
+      <div class="tab" onclick="filterQA('権利関係', this)">権利関係</div>
+      <div class="tab" onclick="filterQA('宅建業法', this)">宅建業法</div>
+      <div class="tab" onclick="filterQA('法令上の制限', this)">法令制限</div>
+      <div class="tab" onclick="filterQA('税・その他', this)">税・その他</div>
+      <div class="tab" onclick="filterQA('starred', this)">⭐ 重要</div>
+    </div>
+    <input type="text" class="search-box" id="qaSearch" placeholder="🔍 キーワード検索（問題・自分の解説・タグ）" oninput="renderQA()">
+
+    <div class="add-form">
+      <div style="display:flex;gap:6px;">
+        <select id="qaSection" style="flex:2;">
+          <option value="権利関係">権利関係</option>
+          <option value="宅建業法">宅建業法</option>
+          <option value="法令上の制限">法令上の制限</option>
+          <option value="税・その他">税・その他</option>
+        </select>
+        <select id="qaMaterial" style="flex:1;">
+          <option value="">教材なし</option>
+          <option value="テキスト">テキスト</option>
+          <option value="一問一答">一問一答</option>
+          <option value="過去問題集">過去問題集</option>
+        </select>
+      </div>
+      <textarea id="qaQuestion" placeholder="問題文 / 設問内容を貼り付け…"></textarea>
+      <textarea id="qaAnswer" placeholder="自分なりの解説・覚え方・引っかけポイント…"></textarea>
+      <input type="text" id="qaTags" placeholder="タグ（カンマ区切り：例 抵当権,対抗要件）">
+      <button class="btn btn-primary" onclick="addQA()">＋ ノートに追加</button>
+    </div>
+    <div class="qa-list" id="qaList"></div>
+  </div>
+
+  <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px 0;">
+    💪 データはブラウザのローカルストレージに保存。エクスポートで定期バックアップを推奨。
+  </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal-bg" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="modal">
+    <h3>☁ クラウド同期設定 (Pantry)</h3>
+    <div id="syncModalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============ EXAM DATE ============ */
+const EXAM_DATE = new Date('2026-10-18T00:00:00+09:00');
+
+/* ============ DEFAULT MATERIAL DATA ============ */
+// テキスト：編単位でページ数管理（読了ページを入力 → ％自動計算）
+const TEXT_DATA = [
+  { name: '第1編 権利関係',     pages: 224, courses: ['意思表示','制限行為能力者','時効','代理','債務不履行・弁済','契約不適合責任','相続','物権変動','不動産登記法','抵当権','保証・連帯債務','共有','建物区分所有法','賃貸借','借地借家法（借家）','借地借家法（借地）','その他の重要事項'] },
+  { name: '第2編 宅建業法',     pages: 155, courses: ['宅建業の意味','事務所','免許','事務所以外の場所の規制','宅地建物取引士','営業保証金','弁済業務保証金','媒介・代理','広告等の規制','重要事項説明','37条書面','その他業務上の規制','自ら売主制限','住宅瑕疵担保履行法','報酬額の制限','監督・罰則'] },
+  { name: '第3編 法令上の制限', pages: 115, courses: ['都市計画法①','都市計画法②','建築基準法①','建築基準法②','国土利用計画法','農地法','土地区画整理法','その他の法令上の制限'] },
+  { name: '第4編 税・その他',   pages: 179, courses: ['地方税','国税','価格の評定','免除科目'] }
+];
+
+// 一問一答：[名前, 問題数, 開始番号]
+const ONEQA_DATA = [
+  { name: '第1編 権利関係', sections: [
+    ['意思表示',15,1],['制限行為能力者',8,16],['時効',10,24],['代理',23,34],['債務不履行・解除',14,57],
+    ['弁済',7,71],['契約不適合責任',11,78],['相続',16,89],['物権変動',14,105],['不動産登記法',16,119],
+    ['抵当権',18,135],['保証・連帯債務',17,153],['共有',10,170],['建物区分所有法',22,180],['賃貸借',11,202],
+    ['借地借家法（借家）',21,213],['借地借家法（借地）',14,234],['不法行為',10,248],['その他',9,258]
+  ]},
+  { name: '第2編 宅建業法', sections: [
+    ['宅建業の意味',12,267],['事務所',14,279],['免許',28,293],['事務所以外の場所',10,321],['宅地建物取引士',17,331],
+    ['営業保証金',15,348],['弁済業務保証金',18,363],['媒介・代理',17,381],['広告等の規制',7,398],['重要事項の説明',28,405],
+    ['37条書面',7,433],['業務上の規制',8,440],['自ら売主制限',25,448],['住宅瑕疵担保履行法',8,473],['報酬額の制限',9,481],['監督・罰則',9,490]
+  ]},
+  { name: '第3編 法令上の制限', sections: [
+    ['都市計画法1',22,499],['都市計画法2',32,521],['建築基準法1',40,553],['建築基準法2',14,593],
+    ['国土利用計画法',17,607],['農地法',21,624],['土地区画整理法',22,645],['その他の法令上の制限',13,667]
+  ]},
+  { name: '第4編 税・その他', sections: [
+    ['不動産取得税',10,680],['固定資産税',13,690],['所得税（譲渡所得）',11,703],['印紙税',17,714],['登録免許税',13,731],
+    ['贈与税',9,744],['地価公示法',9,753],['不動産鑑定評価基準',10,762],['住宅金融支援機構法',10,772],['景品表示法',9,782],['土地',5,791],['建物',5,796]
+  ]}
+];
+
+// 過去問題集：[名前, 問題数, 開始番号]
+const PAST_DATA = [
+  { name: '第1編 権利関係', sections: [
+    ['意思表示',5,1],['制限行為能力者',5,6],['時効',4,11],['代理',10,15],['債務不履行・解除',6,25],
+    ['弁済',2,31],['契約不適合',4,33],['相続',8,37],['物権変動',6,45],['不動産登記法',5,51],
+    ['抵当権',5,56],['保証・連帯債務',6,61],['共有',4,67],['建物区分所有法',7,71],['賃貸借',3,78],
+    ['借地借家法（借家）',8,81],['借地借家法（借地）',9,89],['不法行為',4,99],['相隣関係',1,103],['債権譲渡',2,104],
+    ['請負',2,106],['委任',2,108],['使用貸借',1,110],['条件・期限',1,111],['民法総合',2,112],['判決文問題',2,114]
+  ]},
+  { name: '第2編 宅建業法', sections: [
+    ['宅建業の意味',6,1],['事務所',5,7],['免許',9,12],['事務所以外の場所',4,21],['宅地建物取引士',9,25],
+    ['営業保証金',8,34],['弁済業務保証金',8,42],['媒介・代理',8,50],['広告等の規制',5,58],['重要事項説明',11,63],
+    ['37条書面',7,74],['業務上の規制',4,81],['自ら売主制限',16,85],['住宅瑕疵担保履行法',4,101],['報酬額の制限',5,105],['監督・罰則',6,110]
+  ]},
+  { name: '第3編 法令上の制限', sections: [
+    ['都市計画法',18,1],['建築基準法',20,19],['国土利用計画法',6,39],['農地法',6,45],['土地区画整理法',7,51],['盛土規制法',6,58],['その他の法令上の制限',1,64]
+  ]},
+  { name: '第4編 税・その他', sections: [
+    ['不動産取得税',5,65],['固定資産税',5,70],['所得税（譲渡所得）',4,75],['印紙税',5,79],['登録免許税',3,84],['贈与税',1,87],['地価公示法',6,88],['不動産鑑定評価基準',6,94],
+    ['住宅金融支援機構法',5,100],['景品表示法',6,105],['土地',5,111],['建物',5,116]
+  ]}
+];
+
+const MATERIALS_META = {
+  text:  { name:'テキスト',     icon:'📘', color:'linear-gradient(90deg,#9b5de5,#f15bb5)', barColor:'linear-gradient(90deg,#9b5de5,#f15bb5)' },
+  oneqa: { name:'一問一答',     icon:'✏️', color:'linear-gradient(90deg,#06d6a0,#4cc9f0)', barColor:'linear-gradient(90deg,#06d6a0,#4cc9f0)' },
+  past:  { name:'過去問題集',   icon:'📜', color:'linear-gradient(90deg,#ffd166,#ff7e5f)', barColor:'linear-gradient(90deg,#ffd166,#ff7e5f)' },
+};
+
+function buildDefaultMaterials() {
+  const buildText = () => TEXT_DATA.map(v => ({
+    name: v.name,
+    pages: v.pages,
+    solved: 0,
+    courses: v.courses || []
+  }));
+  const buildRanged = (data) => data.map(v => ({
+    name: v.name,
+    sections: v.sections.map(([n,t,start]) => ({ name:n, total:t, range: start ? `${start}〜${start+t-1}` : '', solved:0, correct:0 }))
+  }));
+  return {
+    text: buildText(),
+    oneqa: buildRanged(ONEQA_DATA),
+    past: buildRanged(PAST_DATA),
+  };
+}
+
+const QUOTES = [
+  "千里の道も一歩から。今日の1問が合格を作る。",
+  "覚えていないのではなく、まだ繰り返していないだけ。",
+  "宅建合格は努力が9割、運が1割。",
+  "間違えた問題こそ、最高の教科書。",
+  "今日サボると、未来の自分が泣く。",
+  "合格者も最初は0点だった。",
+  "焦らず、休まず、諦めず。",
+  "知識は裏切らない。投資した分だけ返ってくる。",
+];
+
+let state = {
+  materials: buildDefaultMaterials(),
+  qa: [],
+  mocks: [],
+  studyDays: [],
+  dailyGoal: 0,
+  todayQuestions: 0,
+  todayDate: '',
+  totalFocus: 0,
+  todayFocus: 0,
+  todayFocusDate: '',
+  filterCat: 'all',
+  activeMaterial: 'text',
+};
+
+/* ============ STORAGE ============ */
+let _uploadTimer = null;
+let _isApplyingRemote = false;
+function save() {
+  state._updatedAt = Date.now();
+  localStorage.setItem('takkenTracker', JSON.stringify(state));
+  // Trigger cloud upload if sync configured (debounced 3s)
+  if (syncConfig.pantryId && syncConfig.autoSync !== false && !_isApplyingRemote) {
+    clearTimeout(_uploadTimer);
+    _uploadTimer = setTimeout(() => cloudUpload(true), 3000);
+  }
+}
+function load() {
+  const raw = localStorage.getItem('takkenTracker');
+  if (raw) {
+    try {
+      const loaded = JSON.parse(raw);
+      // Merge structure but keep latest defaults if old format
+      state = Object.assign(state, loaded);
+      const merged = buildDefaultMaterials();
+      if (!state.materials) state.materials = merged;
+      // --- TEXT: page-based migration ---
+      if (!state.materials.text || !Array.isArray(state.materials.text) || (state.materials.text[0] && state.materials.text[0].sections)) {
+        // Old format (sections-based) → reset to new page-based
+        state.materials.text = merged.text;
+      } else {
+        // New format → sync page totals from defaults but keep solved
+        merged.text.forEach((d, i) => {
+          const userVol = state.materials.text.find(x => x.name === d.name);
+          if (userVol) d.solved = Math.min(userVol.solved || 0, d.pages);
+        });
+        state.materials.text = merged.text;
+      }
+      // --- RANGED: oneqa & past ---
+      ['oneqa','past'].forEach(key => {
+        if (!state.materials[key]) state.materials[key] = merged[key];
+        else {
+          merged[key].forEach((vol, vi) => {
+            const userVol = state.materials[key][vi];
+            if (userVol && userVol.sections) {
+              vol.sections.forEach((sec, si) => {
+                const userSec = userVol.sections.find(s => s.name === sec.name);
+                if (userSec) {
+                  sec.solved = userSec.solved || 0;
+                  sec.correct = userSec.correct || 0;
+                  sec.total = userSec.total || sec.total;
+                }
+              });
+            }
+          });
+          state.materials[key] = merged[key];
+        }
+      });
+    } catch(e) { console.error(e); }
+  }
+  const today = new Date().toISOString().slice(0,10);
+  if (state.todayDate !== today) { state.todayQuestions = 0; state.todayDate = today; }
+  if (state.todayFocusDate !== today) { state.todayFocus = 0; state.todayFocusDate = today; }
+}
+
+/* ============ COUNTDOWN ============ */
+function updateCountdown() {
+  const now = new Date();
+  const diff = EXAM_DATE - now;
+  const days = Math.ceil(diff / (1000*60*60*24));
+  const el = document.getElementById('countdown');
+  if (days > 0) el.textContent = days + ' 日';
+  else if (days === 0) el.textContent = '本番！';
+  else el.textContent = '試験終了';
+  const seed = new Date().getDate();
+  document.getElementById('quote').textContent = '"' + QUOTES[seed % QUOTES.length] + '"';
+}
+
+/* ============ MATERIAL PROGRESS ============ */
+function calcMaterialProgress(matKey) {
+  if (matKey === 'text') {
+    let total = 0, solved = 0;
+    state.materials.text.forEach(v => {
+      total += v.pages || 0;
+      solved += Math.min(v.solved || 0, v.pages || 0);
+    });
+    return { total, solved, correct: 0, pct: total > 0 ? Math.round((solved/total)*100) : 0 };
+  }
+  const vols = state.materials[matKey];
+  let total = 0, solved = 0, correct = 0;
+  vols.forEach(v => v.sections.forEach(s => {
+    total += s.total;
+    solved += Math.min(s.solved, s.total);
+    correct += s.correct || 0;
+  }));
+  return { total, solved, correct, pct: total > 0 ? Math.round((solved/total)*100) : 0 };
+}
+function calcOverall() {
+  const t = calcMaterialProgress('text');
+  const o = calcMaterialProgress('oneqa');
+  const p = calcMaterialProgress('past');
+  // weighted average by total units
+  const totalUnits = t.total + o.total + p.total;
+  const solvedUnits = t.solved + o.solved + p.solved;
+  const correctUnits = t.correct + o.correct + p.correct;
+  // for accuracy use ranged materials only (text uses % so correct doesn't apply)
+  const acc = (o.solved + p.solved) > 0 ? Math.round(((o.correct + p.correct)/(o.solved + p.solved))*100) : 0;
+  return {
+    text: t, oneqa: o, past: p,
+    pct: totalUnits ? Math.round((solvedUnits/totalUnits)*100) : 0,
+    accuracy: acc,
+    totalSolved: solvedUnits,
+    totalCorrect: correctUnits,
+  };
+}
+
+function renderMaterialSummary() {
+  const ov = calcOverall();
+  const root = document.getElementById('matSummary');
+  root.innerHTML = ['text','oneqa','past'].map(k => {
+    const m = ov[k]; const meta = MATERIALS_META[k];
+    return `
+      <div class="mat-row">
+        <div class="mat-label">
+          <span class="mat-name">${meta.icon} ${meta.name}</span>
+          <span class="mat-stats">${m.solved}/${m.total} (${m.pct}%)</span>
+        </div>
+        <div class="progress-wrap" style="height:8px;">
+          <div class="progress-bar" style="width:${m.pct}%;background:${meta.barColor};"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('overallPercent').textContent = ov.pct + '%';
+  document.getElementById('totalSolved').textContent = ov.totalSolved;
+  document.getElementById('totalCorrect').textContent = ov.totalCorrect;
+  document.getElementById('accuracy').textContent = ov.accuracy + '%';
+  const ring = document.getElementById('ringProgress');
+  const circ = 2 * Math.PI * 60;
+  ring.setAttribute('stroke-dasharray', circ);
+  ring.setAttribute('stroke-dashoffset', circ * (1 - ov.pct/100));
+
+  document.getElementById('lbl-text').textContent = `${ov.text.solved}/${ov.text.total} (${ov.text.pct}%)`;
+  document.getElementById('lbl-oneqa').textContent = `${ov.oneqa.solved}/${ov.oneqa.total} (${ov.oneqa.pct}%)`;
+  document.getElementById('lbl-past').textContent = `${ov.past.solved}/${ov.past.total} (${ov.past.pct}%)`;
+}
+
+/* ============ MATERIAL VIEW ============ */
+function switchMaterial(key) {
+  state.activeMaterial = key;
+  document.querySelectorAll('.mat-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+key).classList.add('active');
+  renderMaterialContent();
+  save();
+}
+
+function renderMaterialContent() {
+  const key = state.activeMaterial;
+  const meta = MATERIALS_META[key];
+  const root = document.getElementById('materialContent');
+
+  // === TEXT mode: ページ数で管理 ===
+  if (key === 'text') {
+    const vols = state.materials.text;
+    let html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">📖 読み終わったページ数を入力すると進捗％が自動計算されます。</div>';
+    vols.forEach((v, vi) => {
+      const total = v.pages || 0;
+      const solved = Math.min(v.solved || 0, total);
+      const pct = total ? Math.round((solved/total)*100) : 0;
+      const remain = Math.max(0, total - solved);
+      const coursesHtml = (v.courses || []).map(c => `<span style="font-size:11px;color:var(--muted);background:rgba(0,0,0,0.25);padding:2px 8px;border-radius:8px;">${escapeHtml(c)}</span>`).join(' ');
+      html += `
+        <div style="background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-weight:700;font-size:15px;">${v.name} ${pct>=100?'<span class="badge">完読</span>':''}</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:13px;">
+              <input type="number" class="sec-input" min="0" max="${total}" style="width:70px;" value="${solved}" onchange="updateTextPages(${vi},this.value)" title="読了ページ数">
+              <span>/ ${total} ページ</span>
+              <span style="color:var(--accent);font-weight:700;min-width:42px;text-align:right;">${pct}%</span>
+            </div>
+          </div>
+          <div class="progress-wrap" style="margin-bottom:8px;height:14px;"><div class="progress-bar" style="width:${pct}%;background:${meta.barColor};"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:11px;color:var(--muted);">残り ${remain} ページ</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button class="sec-btn plus-correct" onclick="bumpTextPages(${vi},5)">+5p</button>
+              <button class="sec-btn plus-correct" onclick="bumpTextPages(${vi},10)">+10p</button>
+              <button class="sec-btn plus-correct" onclick="bumpTextPages(${vi},20)">+20p</button>
+              <button class="sec-btn" onclick="bumpTextPages(${vi},-5)">−5p</button>
+              <button class="sec-btn" onclick="setTextPagesMax(${vi})" title="完読">📗 完読</button>
+            </div>
+          </div>
+          ${coursesHtml ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:11px;color:var(--muted);">含まれるコース一覧 (${(v.courses||[]).length}コース)</summary><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${coursesHtml}</div></details>` : ''}
+        </div>`;
+    });
+    root.innerHTML = html;
+    return;
+  }
+
+  // === RANGED mode (一問一答 / 過去問題集) ===
+  const vols = state.materials[key];
+  let html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">解いた問題数（緑：正解／桃：不正解 ボタンで加算）と正解数を入力。</div>';
+  vols.forEach((v, vi) => {
+    let vTotal = 0, vSolved = 0;
+    v.sections.forEach(s => { vTotal += s.total; vSolved += Math.min(s.solved, s.total); });
+    const vPct = vTotal ? Math.round((vSolved/vTotal)*100) : 0;
+    const isOpen = vPct > 0 && vPct < 100;
+    html += `
+      <details class="volume" ${isOpen ? 'open' : ''}>
+        <summary>
+          <div class="vol-info">
+            <div class="vol-name">${v.name} ${vPct >= 100 ? '<span class="badge">完了</span>' : ''}</div>
+            <div class="vol-progress"><div class="vol-bar" style="width:${vPct}%;background:${meta.barColor};"></div></div>
+          </div>
+          <span class="vol-stats">${vSolved}/${vTotal} (${vPct}%)</span>
+        </summary>
+        <div class="volume-body">
+    `;
+    v.sections.forEach((s, si) => {
+      const pct = s.total ? Math.min(100, Math.round((s.solved/s.total)*100)) : 0;
+      const acc = s.solved ? Math.round((s.correct/Math.min(s.solved,s.total))*100) : 0;
+      const range = s.range ? `<span style="color:var(--muted);font-size:10px;">[${s.range}]</span>` : '';
+      html += `
+        <div class="sec-row">
+          <span class="sec-name">${s.name} ${range}</span>
+          <div class="sec-mini-bar"><div class="sec-mini-fill" style="width:${pct}%;background:${meta.barColor};"></div></div>
+          <input type="number" class="sec-input" min="0" placeholder="解いた" value="${s.solved}" onchange="updateSec('${key}',${vi},${si},'solved',this.value)" title="解いた数">
+          <input type="number" class="sec-input" min="0" placeholder="正解" value="${s.correct}" onchange="updateSec('${key}',${vi},${si},'correct',this.value)" title="正解数">
+          <input type="number" class="sec-input" min="1" placeholder="総数" value="${s.total}" onchange="updateSec('${key}',${vi},${si},'total',this.value)" title="目標総数">
+          <span class="sec-pct">${pct}%${s.solved?` <span style="color:var(--green);">${acc}%</span>`:''}</span>
+          <div class="sec-actions">
+            <button class="sec-btn plus-correct" onclick="incSec('${key}',${vi},${si},true)" title="正解を1問追加">＋○</button>
+            <button class="sec-btn plus-wrong" onclick="incSec('${key}',${vi},${si},false)" title="不正解を1問追加">＋×</button>
+          </div>
+        </div>`;
+    });
+    html += `</div></details>`;
+  });
+  root.innerHTML = html;
+}
+
+function updateTextPages(vi, val) {
+  const v = state.materials.text[vi];
+  let n = parseInt(val); if (isNaN(n) || n < 0) n = 0;
+  if (n > v.pages) n = v.pages;
+  v.solved = n;
+  save(); renderMaterialContent(); renderMaterialSummary();
+}
+function bumpTextPages(vi, delta) {
+  const v = state.materials.text[vi];
+  v.solved = Math.max(0, Math.min(v.pages, (v.solved||0) + delta));
+  save(); renderMaterialContent(); renderMaterialSummary();
+}
+function setTextPagesMax(vi) {
+  const v = state.materials.text[vi];
+  v.solved = v.pages;
+  save(); renderMaterialContent(); renderMaterialSummary();
+}
+
+function updateSec(key, vi, si, field, val) {
+  const sec = state.materials[key][vi].sections[si];
+  let v = parseInt(val) || 0;
+  if (v < 0) v = 0;
+  if (key === 'text' && field === 'solved') v = Math.min(v, 100);
+  sec[field] = v;
+  save();
+  renderMaterialContent();
+  renderMaterialSummary();
+}
+function bumpSec(key, vi, si, delta) {
+  const sec = state.materials[key][vi].sections[si];
+  sec.solved = Math.max(0, Math.min(100, (sec.solved||0) + delta));
+  save();
+  renderMaterialContent();
+  renderMaterialSummary();
+}
+function incSec(key, vi, si, correct) {
+  const sec = state.materials[key][vi].sections[si];
+  sec.solved += 1;
+  if (correct) sec.correct += 1;
+  state.todayQuestions += 1;
+  save();
+  renderMaterialContent();
+  renderMaterialSummary();
+  updateGoalProgress();
+}
+
+/* ============ Q&A NOTES ============ */
+function addQA() {
+  const q = document.getElementById('qaQuestion').value.trim();
+  const a = document.getElementById('qaAnswer').value.trim();
+  if (!q) { alert('問題文を入力してください'); return; }
+  state.qa.unshift({
+    id: Date.now(),
+    section: document.getElementById('qaSection').value,
+    material: document.getElementById('qaMaterial').value,
+    question: q,
+    answer: a,
+    tags: document.getElementById('qaTags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    starred: false,
+    created: new Date().toISOString().slice(0,10),
+  });
+  document.getElementById('qaQuestion').value = '';
+  document.getElementById('qaAnswer').value = '';
+  document.getElementById('qaTags').value = '';
+  save(); renderQA();
+}
+function deleteQA(id) {
+  if (!confirm('削除しますか？')) return;
+  state.qa = state.qa.filter(x => x.id !== id);
+  save(); renderQA();
+}
+function toggleStar(id) {
+  const item = state.qa.find(x => x.id === id);
+  if (item) item.starred = !item.starred;
+  save(); renderQA();
+}
+function filterQA(cat, btn) {
+  state.filterCat = cat;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderQA();
+}
+function renderQA() {
+  const search = document.getElementById('qaSearch').value.toLowerCase();
+  const root = document.getElementById('qaList');
+  root.innerHTML = '';
+  let items = state.qa;
+  if (state.filterCat === 'starred') items = items.filter(x => x.starred);
+  else if (state.filterCat !== 'all') items = items.filter(x => x.section === state.filterCat);
+  if (search) {
+    items = items.filter(x =>
+      x.question.toLowerCase().includes(search) ||
+      (x.answer || '').toLowerCase().includes(search) ||
+      (x.tags || []).some(t => t.toLowerCase().includes(search)) ||
+      x.section.toLowerCase().includes(search) ||
+      (x.material || '').toLowerCase().includes(search)
+    );
+  }
+  if (items.length === 0) {
+    root.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">📝 まだノートがありません。わからない問題を追加しよう！</div>';
+    return;
+  }
+  items.forEach(x => {
+    const div = document.createElement('div');
+    div.className = 'qa-item';
+    const tagsHtml = (x.tags || []).map(t => `<span class="qa-tag">#${escapeHtml(t)}</span>`).join('');
+    const matHtml = x.material ? `<span class="qa-tag" style="background:rgba(155,93,229,0.2);border-color:rgba(155,93,229,0.4);color:#cba6ff;">${escapeHtml(x.material)}</span>` : '';
+    div.innerHTML = `
+      <div class="qa-meta">
+        <span class="qa-tag" style="background:rgba(255,209,102,0.2);border-color:rgba(255,209,102,0.4);color:var(--accent);">${escapeHtml(x.section)}</span>
+        ${matHtml}
+        ${tagsHtml}
+        <span style="margin-left:auto;">${x.created}</span>
+      </div>
+      <div class="qa-q">${x.starred ? '⭐ ' : ''}${escapeHtml(x.question).replace(/\n/g,'<br>')}</div>
+      ${x.answer ? `<div class="qa-a">💡 ${escapeHtml(x.answer).replace(/\n/g,'<br>')}</div>` : ''}
+      <div class="qa-actions">
+        <button class="btn btn-small" onclick="toggleStar(${x.id})">${x.starred ? '⭐ 解除' : '☆ 重要'}</button>
+        <button class="btn btn-small" onclick="askAIFromQA(${x.id},'claude')">🟣 Claude</button>
+        <button class="btn btn-small" onclick="askAIFromQA(${x.id},'chatgpt')">🟢 GPT</button>
+        <button class="btn btn-small" onclick="askAIFromQA(${x.id},'gemini')">🔵 Gemini</button>
+        <button class="btn btn-small" onclick="deleteQA(${x.id})" style="color:#ff6b6b;">🗑</button>
+      </div>
+    `;
+    root.appendChild(div);
+  });
+}
+function escapeHtml(str) {
+  return (str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============ AI LAUNCH ============ */
+const AI_URLS = {
+  claude:    q => `https://claude.ai/new?q=${encodeURIComponent(q)}`,
+  chatgpt:   q => `https://chat.openai.com/?q=${encodeURIComponent(q)}`,
+  gemini:    q => `https://gemini.google.com/app?q=${encodeURIComponent(q)}`,
+  perplexity:q => `https://www.perplexity.ai/search?q=${encodeURIComponent(q)}`,
+};
+let currentPreset = 'explain';
+const PRESETS = {
+  explain: '次の宅建試験の問題について、初学者にもわかるよう、結論→根拠条文→典型的な引っかけポイントの順でやさしく解説してください。\n\n【問題】\n',
+  compare: '次の宅建問題について、似た論点・条文と比較表を作り、違いを明確にしてください。\n\n【問題】\n',
+  mnemonic: '次の宅建論点について、覚えやすいゴロ合わせ・語呂合わせを3パターン作ってください。\n\n【論点】\n',
+  quiz: '次の論点に関する4択の類題を3問作って、解答と解説もつけてください。\n\n【論点】\n',
+};
+function setPreset(key) {
+  currentPreset = key;
+  const ta = document.getElementById('aiQuestion');
+  const existing = ta.value.replace(/^[\s\S]*?【(問題|論点)】\n/, '');
+  ta.value = PRESETS[key] + existing;
+}
+function askAI(provider) {
+  const q = document.getElementById('aiQuestion').value.trim();
+  if (!q) { alert('問題文を入力してください'); return; }
+  const fullQ = q.includes('【問題】') || q.includes('【論点】') ? q : PRESETS[currentPreset] + q;
+  window.open(AI_URLS[provider](fullQ), '_blank');
+}
+function askAIFromQA(id, provider) {
+  const item = state.qa.find(x => x.id === id);
+  if (!item) return;
+  const q = PRESETS.explain + item.question + (item.answer ? '\n\n【自分の理解】\n' + item.answer : '');
+  window.open(AI_URLS[provider](q), '_blank');
+}
+
+/* ============ POMODORO ============ */
+let timerSeconds = 25 * 60;
+let timerInterval = null;
+let timerMode = 'focus';
+function setTimerMode(min, mode, btn) {
+  if (timerInterval) return;
+  timerSeconds = min * 60;
+  timerMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTimerDisplay();
+}
+function updateTimerDisplay() {
+  const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  const s = String(timerSeconds%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  document.title = `${m}:${s} - 宅建ダッシュボード`;
+}
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval); timerInterval = null;
+      if (timerMode === 'focus') {
+        const min = Math.round((parseInt(document.querySelector('.mode-btn.active').textContent.match(/\d+/)[0])));
+        state.totalFocus += min; state.todayFocus += min;
+      }
+      save(); updateFocusDisplay();
+      alert(timerMode === 'focus' ? '🎉 お疲れさま！休憩しよう。' : '☕ 休憩終了！集中モードへ。');
+    }
+  }, 1000);
+}
+function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
+function resetTimer() {
+  clearInterval(timerInterval); timerInterval = null;
+  const min = parseInt(document.querySelector('.mode-btn.active').textContent.match(/\d+/)[0]);
+  timerSeconds = min * 60; updateTimerDisplay();
+}
+function updateFocusDisplay() {
+  document.getElementById('todayFocus').textContent = state.todayFocus;
+  document.getElementById('totalFocus').textContent = state.totalFocus;
+}
+
+/* ============ MOCK EXAMS ============ */
+function addMockScore() {
+  const name = document.getElementById('mockName').value.trim();
+  const score = parseInt(document.getElementById('mockScore').value);
+  const date = document.getElementById('mockDate').value || new Date().toISOString().slice(0,10);
+  if (!name || isNaN(score)) { alert('名前と点数を入力してください'); return; }
+  state.mocks.unshift({ id: Date.now(), name, score, date });
+  document.getElementById('mockName').value = '';
+  document.getElementById('mockScore').value = '';
+  save(); renderMocks();
+}
+function deleteMock(id) {
+  state.mocks = state.mocks.filter(m => m.id !== id);
+  save(); renderMocks();
+}
+function renderMocks() {
+  const root = document.getElementById('mockList');
+  root.innerHTML = '';
+  if (state.mocks.length === 0) {
+    root.innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px;">まだ模試の記録がありません</div>';
+    return;
+  }
+  state.mocks.forEach(m => {
+    const passClass = m.score >= 36 ? 'mock-pass' : 'mock-fail';
+    const icon = m.score >= 36 ? '✅' : m.score >= 30 ? '🟡' : '🔴';
+    const div = document.createElement('div');
+    div.className = 'mock-item';
+    div.innerHTML = `
+      <div>${icon} <strong>${escapeHtml(m.name)}</strong><br><span style="font-size:11px;color:var(--muted);">${m.date}</span></div>
+      <div><span class="mock-score ${passClass}">${m.score}/50</span>
+      <button class="btn btn-small" onclick="deleteMock(${m.id})" style="margin-left:6px;">🗑</button></div>
+    `;
+    root.appendChild(div);
+  });
+}
+
+/* ============ DAILY GOAL & STREAK ============ */
+function setDailyGoal() {
+  const v = parseInt(document.getElementById('dailyGoalInput').value);
+  if (isNaN(v) || v < 0) return;
+  state.dailyGoal = v; save(); updateGoalProgress();
+}
+function updateGoalProgress() {
+  const inp = document.getElementById('dailyGoalInput');
+  if (state.dailyGoal && !inp.value) inp.value = state.dailyGoal;
+  const g = state.dailyGoal;
+  const c = state.todayQuestions;
+  const pct = g > 0 ? Math.min(100, Math.round((c/g)*100)) : 0;
+  document.getElementById('goalProgress').textContent = g > 0 ? `${c}/${g} 問 (${pct}%) ${pct>=100?'🎉 達成！':''}` : '目標未設定';
+  document.getElementById('goalBar').style.width = pct + '%';
+}
+function logTodayStudy() {
+  const today = new Date().toISOString().slice(0,10);
+  if (!state.studyDays.includes(today)) {
+    state.studyDays.push(today);
+    save();
+  }
+  updateStreak();
+  alert('📚 今日の学習を記録しました！継続は力なり。');
+}
+function updateStreak() {
+  if (state.studyDays.length === 0) {
+    document.getElementById('streakNum').textContent = '0';
+    return;
+  }
+  const sorted = [...state.studyDays].sort().reverse();
+  let streak = 0;
+  let day = new Date();
+  for (let i = 0; i < 400; i++) {
+    const d = day.toISOString().slice(0,10);
+    if (sorted.includes(d)) {
+      streak++;
+      day.setDate(day.getDate()-1);
+    } else if (i === 0) {
+      // today not yet logged: check if yesterday logged, then count from there
+      day.setDate(day.getDate()-1);
+      const y = day.toISOString().slice(0,10);
+      if (sorted.includes(y)) { streak++; day.setDate(day.getDate()-1); } else break;
+    } else break;
+  }
+  document.getElementById('streakNum').textContent = streak;
+}
+
+/* ============ THEME ============ */
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
+  localStorage.setItem('takkenTheme', document.documentElement.getAttribute('data-theme'));
+}
+
+/* ============ EXPORT/IMPORT ============ */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `takken_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (confirm('現在のデータを上書きしてインポートしますか？')) {
+        state = Object.assign(state, data);
+        save();
+        location.reload();
+      }
+    } catch(err) { alert('ファイルが読み込めません'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ============ CLOUD SYNC (Pantry) ============ */
+let syncConfig = {};
+function loadSyncConfig() {
+  try { syncConfig = JSON.parse(localStorage.getItem('takkenSync') || '{}'); }
+  catch(e) { syncConfig = {}; }
+}
+function saveSyncConfig() {
+  localStorage.setItem('takkenSync', JSON.stringify(syncConfig));
+}
+function setSyncStatus(status, label) {
+  const pill = document.getElementById('syncPill');
+  const lbl = document.getElementById('syncLabel');
+  pill.classList.remove('ok','syncing','err');
+  if (status) pill.classList.add(status);
+  lbl.textContent = label;
+}
+function relTime(ts) {
+  if (!ts) return '未同期';
+  const diff = Math.floor((Date.now()-ts)/1000);
+  if (diff < 60) return diff + '秒前';
+  if (diff < 3600) return Math.floor(diff/60) + '分前';
+  if (diff < 86400) return Math.floor(diff/3600) + '時間前';
+  return Math.floor(diff/86400) + '日前';
+}
+function pantryUrl() {
+  const id = syncConfig.pantryId; const basket = syncConfig.basket || 'takken';
+  return `https://getpantry.cloud/apiv1/pantry/${id}/basket/${basket}`;
+}
+async function cloudUpload(silent) {
+  if (!syncConfig.pantryId) return;
+  setSyncStatus('syncing', '☁ 同期中…');
+  try {
+    const res = await fetch(pantryUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    syncConfig.lastSync = Date.now();
+    saveSyncConfig();
+    setSyncStatus('ok', '☁ ' + relTime(syncConfig.lastSync));
+    renderSyncModal();
+  } catch(e) {
+    setSyncStatus('err', '⚠ 同期エラー');
+    if (!silent) alert('アップロード失敗: ' + e.message + '\n\nPantry IDが正しいか確認してください。');
+  }
+}
+/**
+ * 双方向マージ：進捗数値はmax、リストは和集合。
+ * これにより両端末の変更が消えない。
+ */
+function mergeStates(local, cloud) {
+  if (!cloud) return local;
+  if (!local) return cloud;
+  const merged = JSON.parse(JSON.stringify(cloud)); // start from cloud
+
+  // === Materials ===
+  if (local.materials && cloud.materials) {
+    // text (page-based)
+    if (Array.isArray(local.materials.text) && Array.isArray(cloud.materials.text)) {
+      merged.materials.text = local.materials.text.map((vol, i) => {
+        const cVol = cloud.materials.text.find(x => x.name === vol.name) || cloud.materials.text[i] || {};
+        return {
+          ...vol,
+          pages: vol.pages || cVol.pages,
+          solved: Math.max(vol.solved || 0, cVol.solved || 0),
+          courses: vol.courses || cVol.courses
+        };
+      });
+    }
+    // ranged (oneqa, past)
+    ['oneqa','past'].forEach(key => {
+      if (Array.isArray(local.materials[key]) && Array.isArray(cloud.materials[key])) {
+        merged.materials[key] = local.materials[key].map((vol, vi) => {
+          const cVol = cloud.materials[key].find(x => x.name === vol.name) || cloud.materials[key][vi];
+          if (!cVol) return vol;
+          return {
+            ...vol,
+            sections: vol.sections.map((sec, si) => {
+              const cSec = (cVol.sections || []).find(x => x.name === sec.name) || cVol.sections[si];
+              if (!cSec) return sec;
+              return {
+                ...sec,
+                solved: Math.max(sec.solved || 0, cSec.solved || 0),
+                correct: Math.max(sec.correct || 0, cSec.correct || 0),
+                total: sec.total || cSec.total
+              };
+            })
+          };
+        });
+      }
+    });
+  }
+
+  // === QA notes: union by ID, prefer newer ===
+  const qaMap = new Map();
+  (cloud.qa || []).forEach(q => qaMap.set(q.id, q));
+  (local.qa || []).forEach(q => {
+    const ex = qaMap.get(q.id);
+    if (!ex) { qaMap.set(q.id, q); }
+    else {
+      // Take the one with more content (likely the edited version)
+      const merge = {
+        ...ex, ...q,
+        starred: q.starred || ex.starred,
+        tags: Array.from(new Set([...(ex.tags||[]), ...(q.tags||[])])),
+      };
+      qaMap.set(q.id, merge);
+    }
+  });
+  merged.qa = Array.from(qaMap.values()).sort((a,b) => b.id - a.id);
+
+  // === Mocks: union by ID ===
+  const mockMap = new Map();
+  (cloud.mocks || []).forEach(m => mockMap.set(m.id, m));
+  (local.mocks || []).forEach(m => { if (!mockMap.has(m.id)) mockMap.set(m.id, m); });
+  merged.mocks = Array.from(mockMap.values()).sort((a,b) => b.id - a.id);
+
+  // === studyDays: union ===
+  merged.studyDays = Array.from(new Set([...(cloud.studyDays || []), ...(local.studyDays || [])])).sort();
+
+  // === Daily goal: newer wins ===
+  if ((local._updatedAt || 0) >= (cloud._updatedAt || 0)) {
+    merged.dailyGoal = local.dailyGoal;
+  }
+
+  // === Today's counters: same-day max ===
+  const today = new Date().toISOString().slice(0,10);
+  const localToday = local.todayDate === today;
+  const cloudToday = cloud.todayDate === today;
+  if (localToday && cloudToday) {
+    merged.todayQuestions = Math.max(local.todayQuestions || 0, cloud.todayQuestions || 0);
+    merged.todayFocus = Math.max(local.todayFocus || 0, cloud.todayFocus || 0);
+    merged.todayDate = today;
+    merged.todayFocusDate = today;
+  } else if (localToday) {
+    merged.todayQuestions = local.todayQuestions;
+    merged.todayFocus = local.todayFocus;
+    merged.todayDate = today;
+    merged.todayFocusDate = today;
+  } else if (cloudToday) {
+    merged.todayQuestions = cloud.todayQuestions;
+    merged.todayFocus = cloud.todayFocus;
+    merged.todayDate = today;
+    merged.todayFocusDate = today;
+  } else {
+    merged.todayQuestions = 0;
+    merged.todayFocus = 0;
+    merged.todayDate = today;
+    merged.todayFocusDate = today;
+  }
+
+  // === Total focus: max (cumulative) ===
+  merged.totalFocus = Math.max(local.totalFocus || 0, cloud.totalFocus || 0);
+
+  // === activeMaterial: prefer local (UI state) ===
+  merged.activeMaterial = local.activeMaterial || cloud.activeMaterial || 'text';
+  merged.filterCat = local.filterCat || cloud.filterCat || 'all';
+
+  // === _updatedAt: max ===
+  merged._updatedAt = Math.max(local._updatedAt || 0, cloud._updatedAt || 0);
+
+  return merged;
+}
+
+async function cloudDownload(silent) {
+  if (!syncConfig.pantryId) return;
+  setSyncStatus('syncing', '☁ 取得中…');
+  try {
+    const res = await fetch(pantryUrl());
+    if (res.status === 400) {
+      // Basket doesn't exist yet → seed with current state
+      setSyncStatus('ok', '☁ 初回 (アップロード中)');
+      await cloudUpload(true);
+      return true;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const cloudData = await res.json();
+
+    // Bidirectional merge
+    const merged = mergeStates(state, cloudData);
+    const localStr = JSON.stringify(state);
+    const mergedStr = JSON.stringify(merged);
+    const cloudStr = JSON.stringify(cloudData);
+
+    const localChanged = localStr !== mergedStr;
+    const cloudOutdated = cloudStr !== mergedStr;
+
+    if (localChanged) {
+      _isApplyingRemote = true;
+      state = merged;
+      localStorage.setItem('takkenTracker', JSON.stringify(state));
+      _isApplyingRemote = false;
+      // Re-render
+      switchMaterial(state.activeMaterial || 'text');
+      renderMaterialSummary();
+      renderQA();
+      renderMocks();
+      updateStreak();
+      updateGoalProgress();
+      updateFocusDisplay();
+    }
+
+    // If local had unique changes, push back to cloud so other devices see them
+    if (cloudOutdated && !localChanged) {
+      // Local had changes that cloud didn't → upload
+      await cloudUpload(true);
+    } else if (cloudOutdated && localChanged) {
+      // Both differ from merged → upload merged
+      await cloudUpload(true);
+    }
+
+    syncConfig.lastSync = Date.now();
+    saveSyncConfig();
+    setSyncStatus('ok', '☁ ' + relTime(syncConfig.lastSync));
+    renderSyncModal();
+    if (!silent) {
+      if (localChanged) alert('☁ クラウドの内容と統合しました');
+      else alert('既に同期済みです');
+    }
+    return true;
+  } catch(e) {
+    setSyncStatus('err', '⚠ 取得エラー');
+    if (!silent) alert('取得失敗: ' + e.message + '\n\nPantry ID/バスケット名を確認してください。');
+    return false;
+  }
+}
+
+async function forceOverwriteCloud() {
+  if (!confirm('⚠ ローカルの内容でクラウドを完全上書きします。\n他端末側の未同期の変更は失われます。\n本当に実行しますか？')) return;
+  await cloudUpload(false);
+  alert('☁ ローカルの内容でクラウドを上書きしました');
+}
+async function forcePullFromCloud() {
+  if (!confirm('⚠ クラウドの内容でローカルを完全上書きします。\nこの端末で行った未同期の変更は失われます。\n本当に実行しますか？')) return;
+  if (!syncConfig.pantryId) return;
+  try {
+    const res = await fetch(pantryUrl());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    _isApplyingRemote = true;
+    state = data;
+    localStorage.setItem('takkenTracker', JSON.stringify(state));
+    _isApplyingRemote = false;
+    location.reload();
+  } catch(e) {
+    alert('取得失敗: ' + e.message);
+  }
+}
+
+function openSyncModal() {
+  document.getElementById('syncModal').classList.add('active');
+  renderSyncModal();
+}
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('active');
+}
+function renderSyncModal() {
+  const body = document.getElementById('syncModalBody');
+  if (!body) return;
+  if (syncConfig.pantryId) {
+    const localTs = state._updatedAt ? new Date(state._updatedAt).toLocaleString('ja-JP') : '未更新';
+    body.innerHTML = `
+      <div style="background:rgba(6,214,160,0.15);border:1px solid rgba(6,214,160,0.4);border-radius:10px;padding:12px;font-size:13px;margin-bottom:12px;">
+        ✅ 接続中<br>
+        <small style="color:var(--muted);">Pantry ID: <code style="user-select:all;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;">${escapeHtml(syncConfig.pantryId)}</code></small><br>
+        <small style="color:var(--muted);">バスケット: ${escapeHtml(syncConfig.basket || 'takken')}</small><br>
+        <small style="color:var(--muted);">最終同期: ${relTime(syncConfig.lastSync)}</small><br>
+        <small style="color:var(--muted);">ローカル最終更新: ${localTs}</small>
+      </div>
+      <details style="margin-bottom:12px;">
+        <summary style="cursor:pointer;font-size:12px;color:var(--muted);">🔍 デバッグ情報を表示</summary>
+        <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;font-size:11px;font-family:monospace;margin-top:6px;word-break:break-all;">
+          state._updatedAt: ${state._updatedAt || 'undefined'}<br>
+          lastSync: ${syncConfig.lastSync || 'undefined'}<br>
+          autoSync: ${syncConfig.autoSync !== false}<br>
+          URL: ${escapeHtml(pantryUrl())}<br>
+          UA: ${escapeHtml(navigator.userAgent.slice(0, 60))}…
+        </div>
+        <button class="btn btn-small" style="margin-top:6px;" onclick="testCloud()">🧪 接続テスト</button>
+      </details>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="autoSyncChk" ${syncConfig.autoSync !== false ? 'checked' : ''} onchange="toggleAutoSync(this.checked)">
+        自動同期 (変更を3秒後に自動アップロード)
+      </label>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="cloudDownload(false)">🔄 同期（双方向マージ）</button>
+        <button class="btn btn-primary" onclick="cloudUpload(false)">⬆ 今すぐアップロード</button>
+        <button class="btn" onclick="closeSyncModal()">閉じる</button>
+      </div>
+      <details style="margin-top:14px;background:rgba(247,37,133,0.08);border:1px solid rgba(247,37,133,0.3);border-radius:8px;padding:8px 12px;">
+        <summary style="cursor:pointer;font-size:12px;color:var(--pink);">⚠ 強制操作（通常は不要）</summary>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+          通常は「双方向マージ」で大丈夫ですが、強制的に上書きしたい時のみ：
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn btn-small" onclick="forceOverwriteCloud()">📤 ローカル→クラウド完全上書き</button>
+          <button class="btn btn-small" onclick="forcePullFromCloud()">📥 クラウド→ローカル完全上書き</button>
+        </div>
+      </details>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-small" style="color:#ff6b6b;margin-left:auto;" onclick="disconnectSync()">切断</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6;">
+        💡 PCとiPhoneで同じPantry IDを設定すると、両方のデータが同期されます。<br>
+        🔀 双方向マージ：進捗数値はmax、ノート/模試はID単位で和集合<br>
+        ⚠ Pantry無料サービスのため、念のため定期的に「⬇ エクスポート」でバックアップも推奨<br>
+        📊 制限: 1日100リクエスト / 1MB
+      </div>
+    `;
+  } else {
+    body.innerHTML = `
+      <div class="step-box">
+        <strong>📋 セットアップ手順 (2分)</strong>
+        <ol>
+          <li><a href="https://getpantry.cloud" target="_blank">getpantry.cloud</a> を開く</li>
+          <li>"Get a Pantry" にメールアドレスを入力 → 送信</li>
+          <li>すぐに表示される <strong>Pantry ID</strong> (UUID形式) をコピー</li>
+          <li>下に貼り付けて「接続」</li>
+        </ol>
+      </div>
+      <label>Pantry ID</label>
+      <input type="text" id="pantryIdInput" placeholder="例: a1b2c3d4-5678-90ab-cdef-1234567890ab">
+      <label>バスケット名 (任意・初期値 takken)</label>
+      <input type="text" id="basketInput" placeholder="takken" value="takken">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="connectSync()">☁ 接続して同期する</button>
+        <button class="btn" onclick="closeSyncModal()">キャンセル</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6;">
+        💡 同じPantry IDをPC/iPhoneの両方で設定すれば、データが共有されます。<br>
+        ⚠ Pantry IDは他人に教えないでください (=データに誰でもアクセスできます)。
+      </div>
+    `;
+  }
+}
+async function connectSync() {
+  const id = document.getElementById('pantryIdInput').value.trim();
+  const basket = (document.getElementById('basketInput').value.trim() || 'takken');
+  if (!id) { alert('Pantry IDを入力してください'); return; }
+  syncConfig.pantryId = id;
+  syncConfig.basket = basket;
+  syncConfig.autoSync = true;
+  saveSyncConfig();
+  setSyncStatus('syncing', '☁ 接続中…');
+  // Try downloading first; if cloud is empty, will auto-upload
+  const ok = await cloudDownload(false);
+  if (ok) {
+    renderSyncModal();
+  } else {
+    syncConfig = {};
+    saveSyncConfig();
+    setSyncStatus('', '☁ 同期未設定');
+  }
+}
+function disconnectSync() {
+  if (!confirm('クラウド同期を切断しますか？\n(クラウド上のデータは残ります)')) return;
+  syncConfig = {};
+  saveSyncConfig();
+  setSyncStatus('', '☁ 同期未設定');
+  renderSyncModal();
+}
+function toggleAutoSync(v) {
+  syncConfig.autoSync = v;
+  saveSyncConfig();
+}
+async function testCloud() {
+  if (!syncConfig.pantryId) { alert('未接続'); return; }
+  try {
+    const res = await fetch(pantryUrl());
+    const text = await res.text();
+    let preview;
+    try {
+      const json = JSON.parse(text);
+      preview = `_updatedAt: ${json._updatedAt ? new Date(json._updatedAt).toLocaleString('ja-JP') : 'なし'}\n`
+              + `qa件数: ${(json.qa || []).length}\n`
+              + `教材データ: ${json.materials ? 'あり' : 'なし'}\n`
+              + `--- 先頭200文字 ---\n${text.slice(0, 200)}`;
+    } catch(e) {
+      preview = text.slice(0, 300);
+    }
+    alert(`ステータス: ${res.status}\n\n${preview}`);
+  } catch(e) {
+    alert('通信エラー: ' + e.message);
+  }
+}
+
+/* ============ INIT ============ */
+async function init() {
+  loadSyncConfig();
+  load();
+  const theme = localStorage.getItem('takkenTheme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  updateCountdown();
+  setInterval(updateCountdown, 60000);
+  switchMaterial(state.activeMaterial || 'text');
+  renderMaterialSummary();
+  renderQA();
+  renderMocks();
+  updateStreak();
+  updateGoalProgress();
+  updateFocusDisplay();
+  if (state.dailyGoal) document.getElementById('dailyGoalInput').value = state.dailyGoal;
+  document.getElementById('mockDate').value = new Date().toISOString().slice(0,10);
+  setPreset('explain');
+  // Sync setup
+  if (syncConfig.pantryId) {
+    setSyncStatus('ok', '☁ ' + relTime(syncConfig.lastSync));
+    await cloudDownload(true);
+  } else {
+    setSyncStatus('', '☁ 同期未設定');
+  }
+  // Refresh "X分前" label every 30s
+  setInterval(() => {
+    if (syncConfig.pantryId && syncConfig.lastSync) {
+      const pill = document.getElementById('syncPill');
+      if (pill && pill.classList.contains('ok')) {
+        document.getElementById('syncLabel').textContent = '☁ ' + relTime(syncConfig.lastSync);
+      }
+    }
+  }, 30000);
+
+  // === Auto-download on focus / visibility change / periodic ===
+  let _lastAutoDl = 0;
+  const tryAutoDownload = () => {
+    if (!syncConfig.pantryId) return;
+    if (document.hidden) return;
+    const now = Date.now();
+    if (now - _lastAutoDl < 8000) return; // throttle 8s
+    _lastAutoDl = now;
+    cloudDownload(true);
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tryAutoDownload();
+  });
+  window.addEventListener('focus', tryAutoDownload);
+  // Periodic check every 3 minutes when tab is visible
+  setInterval(tryAutoDownload, 180000);
+}
+init();
+</script>
+</body>
+</html>
